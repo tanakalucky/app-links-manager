@@ -1,5 +1,7 @@
 import type { LinksFunction } from '@remix-run/cloudflare';
-import { Links, Meta, Outlet, Scripts, ScrollRestoration } from '@remix-run/react';
+import { Links, Meta, Outlet, Scripts, ScrollRestoration, isRouteErrorResponse, useRouteError } from '@remix-run/react';
+import { RefreshCw } from 'lucide-react';
+import { Button } from '~/components/ui/button';
 
 import './tailwind.css';
 import { ReactNode } from 'react';
@@ -19,6 +21,38 @@ export const links: LinksFunction = () => [
   },
   { rel: 'stylesheet', href: styles },
 ];
+
+export function ErrorBoundary() {
+  const error = useRouteError();
+
+  return (
+    <html lang='en'>
+      <head>
+        <meta charSet='utf-8' />
+        <meta name='viewport' content='width=device-width, initial-scale=1' />
+        <Meta />
+        <Links />
+      </head>
+      <body>
+        <div className='min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4'>
+          <div className='text-center'>
+            <h1 className='text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4'>
+              {isRouteErrorResponse(error) ? `${error.status} ${error.statusText}` : 'Error'}
+            </h1>
+            <p className='text-gray-600 dark:text-gray-400 mb-6'>
+              {isRouteErrorResponse(error) ? error.data : 'An unexpected error occurred'}
+            </p>
+            <Button onClick={() => window.location.reload()} variant='outline' className='gap-2'>
+              <RefreshCw className='h-4 w-4' />
+              Try again
+            </Button>
+          </div>
+        </div>
+        <Scripts />
+      </body>
+    </html>
+  );
+}
 
 export function Layout({ children }: { children: ReactNode }) {
   return (

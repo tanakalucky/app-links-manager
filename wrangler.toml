@@ -3,12 +3,16 @@ pages_build_output_dir = "build/client"
 compatibility_date = "2025-02-08"
 
 [[d1_databases]]
-database_id = "a271f8c2-83e5-4f60-8c0a-e4900585b569"
-binding = "DB"
-database_name = "app-links-manager-preview"
-preview_database_id = "a271f8c2-83e5-4f60-8c0a-e4900585b569"
-
-[[env.production.d1_databases]]
 database_id = "3b64f2eb-9377-4669-b85a-52a930937892"
 binding = "DB"
 database_name = "app-links-manager"
+preview_database_id = "a271f8c2-83e5-4f60-8c0a-e4900585b569"
+
+[env.preview]
+name = "app-links-manager-preview"
+compatibility_date = "2025-02-08"
+
+[[env.preview.d1_databases]]
+database_id = "a271f8c2-83e5-4f60-8c0a-e4900585b569"
+binding = "DB"
+database_name = "app-links-manager-preview"

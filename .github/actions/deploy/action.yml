@@ -35,4 +35,4 @@ runs:
       with:
         apiToken: ${{ inputs.cloudflare-api-token }}
         accountId: ${{ inputs.cloudflare-account-id }}
-        command: pages deploy build/client --branch ${{ inputs.branch-name }}
+        command: pages deploy --branch ${{ inputs.branch-name }}

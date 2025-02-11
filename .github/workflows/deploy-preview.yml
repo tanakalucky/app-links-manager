@@ -9,15 +9,15 @@ jobs:
   deploy:
     name: Deploy
     runs-on: ubuntu-latest
+    environment: 
+      name: preview
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Get preview URL
-        id: preview-url
+      - name: Generate env file
         run: |
-          PREVIEW_URL="https://preview.${GITHUB_REPOSITORY#*/}.pages.dev"
-          echo "PREVIEW_URL=$PREVIEW_URL" >> $GITHUB_ENV
+          echo "VITE_API_URL=${{ secrets.VITE_API_URL }}" > .env
 
       - name: Deploy pages
         uses: ./.github/actions/deploy

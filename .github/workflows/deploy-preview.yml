@@ -19,20 +19,6 @@ jobs:
           PREVIEW_URL="https://preview.${GITHUB_REPOSITORY#*/}.pages.dev"
           echo "PREVIEW_URL=$PREVIEW_URL" >> $GITHUB_ENV
 
-      - name: Set Cloudflare secrets
-        uses: ./.github/actions/set-cloudflare-secrets
-        with:
-          cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          cloudflare-account-id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          environment: preview
-          secrets: |
-            [
-              {
-                "name": "VITE_API_URL",
-                "value": "${{ env.PREVIEW_URL }}/"
-              }
-            ]
-
       - name: Deploy pages
         uses: ./.github/actions/deploy
         with:

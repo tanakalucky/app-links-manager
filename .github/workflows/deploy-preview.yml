@@ -16,8 +16,9 @@ jobs:
       - name: Get preview URL
         id: preview-url
         run: |
-          COMMIT_HASH=${GITHUB_SHA:0:8}
-          PREVIEW_URL="https://${COMMIT_HASH}.${GITHUB_REPOSITORY#*/}.pages.dev"
+          BRANCH_NAME=${GITHUB_REF#refs/heads/}
+          BRANCH_NAME=${BRANCH_NAME//\//-}
+          PREVIEW_URL="https://${BRANCH_NAME}.${GITHUB_REPOSITORY#*/}.pages.dev"
           echo "PREVIEW_URL=$PREVIEW_URL" >> $GITHUB_ENV
 
       - name: Set Cloudflare secrets

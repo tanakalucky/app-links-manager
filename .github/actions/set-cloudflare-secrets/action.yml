@@ -1,0 +1,46 @@
+name: Set Cloudflare Secrets
+description: Set secrets for Cloudflare Pages project
+
+inputs:
+  cloudflare-api-token:
+    description: 'Cloudflare API Token'
+    required: true
+  
+  cloudflare-account-id:
+    description: 'Cloudflare Account ID'
+    required: true
+  
+  environment:
+    description: 'Environment name (e.g. preview, production)'
+    required: true
+  
+  secrets:
+    description: 'JSON string of secrets to set. Format: [{"name": "SECRET_NAME", "value": "secret_value"}]'
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+    
+    - name: Install Wrangler
+      shell: bash
+      run: npm install -g wrangler
+
+    - name: Set secrets
+      shell: bash
+      run: |
+        echo '${{ inputs.secrets }}' | jq -c '.[]' | while read -r secret; do
+          name=$(echo $secret | jq -r '.name')
+          value=$(echo $secret | jq -r '.value')
+          
+          echo "Setting secret: $name"
+          echo "$value" | wrangler pages secret put "$name" \
+            --env ${{ inputs.environment }}
+        done
+      env:
+        CLOUDFLARE_API_TOKEN: ${{ inputs.cloudflare-api-token }}
+        CLOUDFLARE_ACCOUNT_ID: ${{ inputs.cloudflare-account-id }}

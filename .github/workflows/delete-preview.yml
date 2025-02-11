@@ -1,0 +1,60 @@
+name: Delete Preview
+
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - main
+
+jobs:
+  delete-preview:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get branch name
+        id: get-branch
+        run: echo "branch=$(gh pr view "$PR_NO" --repo "$REPO" --json headRefName --jq '.headRefName')" >> $GITHUB_OUTPUT
+        env:
+          REPO: ${{ github.repository }}
+          PR_NO: ${{ github.event.pull_request.number }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Delete preview
+        run: |
+          DEPLOY_BRANCH="${{ steps.get-branch.outputs.branch }}"
+          set -e
+
+          echo "Fetching deployments for branch: $DEPLOY_BRANCH"
+
+          deployment_ids=$(curl -s -X GET "https://api.cloudflare.com/client/v4/accounts/${{ secrets.CLOUDFLARE_ACCOUNT_ID }}/pages/projects/${{ github.event.repository.name }}/deployments" \
+            -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            | jq -r --arg DEPLOY_BRANCH "$DEPLOY_BRANCH" '
+              if .success then
+                .result[] | select(.deployment_trigger.metadata.branch == $DEPLOY_BRANCH) | .id
+              else
+                "ERROR: " + (.errors | tostring)
+              end')
+
+          if [[ $deployment_ids == ERROR:* ]]; then
+            echo "$deployment_ids"
+            exit 1
+          fi
+
+          if [ -z "$deployment_ids" ]; then
+            echo "No deployments found for branch: $DEPLOY_BRANCH"
+            exit 0
+          fi
+
+          for deployment_id in $deployment_ids; do
+            echo "Deleting deployment $deployment_id"
+
+            response=$(curl -s -X DELETE "https://api.cloudflare.com/client/v4/accounts/${{ secrets.CLOUDFLARE_ACCOUNT_ID }}/pages/projects/${{ github.event.repository.name }}/deployments/$deployment_id?force=true" \
+              -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+              -H "Content-Type: application/json")
+            
+            if ! echo "$response" | jq -e '.success' > /dev/null; then
+              echo "Failed to delete deployment: $deployment_id"
+              echo "Error: $(echo "$response" | jq -r '.errors[0].message // "Unknown error"')"
+              exit 1
+            fi
+          done

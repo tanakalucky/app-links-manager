@@ -1,0 +1,41 @@
+name: Deploy Preview
+
+on:
+  push:
+    branches:
+      - 'feature/**'
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get preview URL
+        id: preview-url
+        run: |
+          BRANCH_NAME=${GITHUB_REF#refs/heads/}
+          PREVIEW_URL="https://${BRANCH_NAME}.${GITHUB_REPOSITORY#*/}.pages.dev"
+          echo "PREVIEW_URL=$PREVIEW_URL" >> $GITHUB_ENV
+
+      - name: Set Cloudflare secrets
+        uses: ./.github/actions/set-cloudflare-secrets
+        with:
+          cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          cloudflare-account-id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          environment: preview
+          secrets: |
+            [
+              {
+                "name": "VITE_API_URL",
+                "value": "${{ env.PREVIEW_URL }}/"
+              }
+            ]
+
+      - name: Deploy pages
+        uses: ./.github/actions/deploy
+        with:
+          cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          cloudflare-account-id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

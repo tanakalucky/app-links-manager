@@ -15,7 +15,7 @@ export const meta: MetaFunction = () => {
   return [{ title: 'App Links' }, { name: 'description', content: 'Browse and manage your app links' }];
 };
 
-interface AppLinkWithThumnail extends AppLink {
+interface AppLinkWithThumbnail extends AppLink {
   thumbnail: string;
 }
 
@@ -27,7 +27,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     const data = await client.api['app-links'].$get();
 
     const allApps = (await data.json()).map(
-      (v): AppLinkWithThumnail => ({
+      (v): AppLinkWithThumbnail => ({
         ...v,
         thumbnail: `https://picsum.photos/seed/${v.id}/300/200`,
       }),

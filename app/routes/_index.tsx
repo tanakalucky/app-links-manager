@@ -38,7 +38,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
       : allApps;
 
     return { apps: filteredApps, query };
-  } catch (_) {
+  } catch (e) {
+    console.error('Failed to fetch apps', e);
     throw new Error('Failed to fetch apps');
   }
 }

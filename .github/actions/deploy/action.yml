@@ -8,6 +8,11 @@ inputs:
   cloudflare-account-id:
     required: true
 
+  branch-name:
+    description: 'Branch name for deployment'
+    required: false
+    default: 'main'
+
 runs:
   using: "composite"
   steps:
@@ -30,4 +35,4 @@ runs:
       with:
         apiToken: ${{ inputs.cloudflare-api-token }}
         accountId: ${{ inputs.cloudflare-account-id }}
-        command: pages deploy
+        command: pages deploy build/client --branch ${{ inputs.branch-name }}

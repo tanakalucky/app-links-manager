@@ -34,12 +34,25 @@ runs:
       shell: bash
       run: |
         echo '${{ inputs.secrets }}' | jq -c '.[]' | while read -r secret; do
+          value=$(echo $secret | jq -r '.value')
+          echo "::add-mask::$value"
+        done
+
+        # シークレットの設定処理
+        echo '${{ inputs.secrets }}' | jq -c '.[]' | while read -r secret; do
           name=$(echo $secret | jq -r '.name')
           value=$(echo $secret | jq -r '.value')
           
           echo "Setting secret: $name"
           echo "$value" | wrangler pages secret put "$name" \
-            --env ${{ inputs.environment }}
+            --env ${{ inputs.environment }} > /dev/null 2>&1
+          
+          if [ $? -eq 0 ]; then
+            echo "✓ Secret $name has been set successfully"
+          else
+            echo "✗ Failed to set secret $name"
+            exit 1
+          fi
         done
       env:
         CLOUDFLARE_API_TOKEN: ${{ inputs.cloudflare-api-token }}

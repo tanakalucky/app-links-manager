@@ -10,16 +10,25 @@ jobs:
   delete-preview:
     runs-on: ubuntu-latest
     steps:
-      - name: Delete preview deployment
+      - name: Get branch name
+        id: get-branch
+        run: echo "branch=$(gh pr view $PR_NO --repo $REPO --json headRefName --jq '.headRefName')" >> $GITHUB_OUTPUT
+        env:
+          REPO: ${{ github.repository }}
+          PR_NO: ${{ github.event.pull_request.number }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Delete Cloudflare Pages preview deployments
         run: |
-          response=$(curl -s -X DELETE "https://api.cloudflare.com/client/v4/accounts/${{ secrets.CLOUDFLARE_ACCOUNT_ID }}/pages/projects/${{ github.event.repository.name }}/deployments?branch=${{ github.event.pull_request.head.ref }}" \
+          DEPLOY_BRANCH="${{ steps.get-branch.outputs.branch }}"
+          deployment_ids=$(curl -s -X GET "https://api.cloudflare.com/client/v4/accounts/${{ secrets.CLOUDFLARE_ACCOUNT_ID }}/pages/projects/${{ github.event.repository.name }}/deployments" \
             -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
-            -H "Content-Type: application/json")
-          
-          if ! echo "$response" | jq -e '.success' > /dev/null; then
-            echo "Failed to delete preview deployment"
-            echo "Error: $(echo "$response" | jq -r '.errors[0].message // "Unknown error"')"
-            exit 1
-          fi
-          
-          echo "Successfully deleted preview deployment"
+            -H "Content-Type: application/json" \
+            | jq -r --arg DEPLOY_BRANCH "$DEPLOY_BRANCH" '.result[] | select(.deployment_trigger.metadata.branch == $DEPLOY_BRANCH) | .id')
+
+          for deployment_id in $deployment_ids; do
+            echo "Deleting deployment $deployment_id"
+            curl -s -X DELETE "https://api.cloudflare.com/client/v4/accounts/${{ secrets.CLOUDFLARE_ACCOUNT_ID }}/pages/projects/${{ github.event.repository.name }}/deployments/$deployment_id?force=true" \
+              -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+              -H "Content-Type: application/json"
+          done

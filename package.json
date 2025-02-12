@@ -9,7 +9,7 @@
     "dev": "remix vite:dev",
     "lint": "npx @biomejs/biome lint --write",
     "format": "npx @biomejs/biome format --write",
-    "start": "wrangler pages dev ./build/client",
+    "start": "wrangler pages dev",
     "typecheck": "tsc",
     "typegen": "wrangler types",
     "ui:add": "npx shadcn@latest add"

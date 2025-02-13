@@ -1,6 +1,7 @@
 import { D1Database } from '@cloudflare/workers-types';
 import { Hono } from 'hono';
 import { cache } from 'hono/cache';
+import { csrf } from 'hono/csrf';
 import { AppLink } from '~/types/app-link';
 
 type Bindings = {
@@ -8,6 +9,8 @@ type Bindings = {
 };
 
 const app = new Hono<{ Bindings: Bindings }>().basePath('/api');
+
+app.use(csrf());
 
 const route = app.get(
   '/app-links',

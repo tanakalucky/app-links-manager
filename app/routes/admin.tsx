@@ -58,17 +58,40 @@ export async function action({ request }: ActionFunctionArgs) {
   const formData = await request.formData();
   const intent = formData.get('intent');
 
-  await new Promise((resolve) => setTimeout(resolve, 1000));
+  try {
+    switch (intent) {
+      case 'create': {
+        const title = formData.get('title');
+        const url = formData.get('url');
 
-  switch (intent) {
-    case 'create':
-      return { success: true, message: 'Link created successfully' };
-    case 'update':
-      return { success: true, message: 'Link updated successfully' };
-    case 'delete':
-      return { success: true, message: 'Link deleted successfully' };
-    default:
-      return { success: false, message: 'Invalid action' };
+        if (!title || !url) {
+          return { success: false, message: 'Title and URL are required' };
+        }
+
+        const response = await client.api['app-links'].create.$post({
+          json: {
+            name: title,
+            url: url,
+          },
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          return { success: false, message: error || 'Failed to create link' };
+        }
+
+        return { success: true, message: 'Link created successfully' };
+      }
+      case 'update':
+        return { success: true, message: 'Link updated successfully' };
+      case 'delete':
+        return { success: true, message: 'Link deleted successfully' };
+      default:
+        return { success: false, message: 'Invalid action' };
+    }
+  } catch (error) {
+    console.error('Action failed:', error);
+    return { success: false, message: 'Action failed' };
   }
 }
 
@@ -105,13 +128,28 @@ export default function AdminLinks() {
   };
 
   const handleCreateLink = () => {
-    submit({ intent: 'create', ...newLink }, { method: 'POST', replace: true });
+    if (!newLink.title || !newLink.url) {
+      toast({
+        title: 'Error',
+        description: 'Title and URL are required',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    submit(
+      {
+        intent: 'create',
+        title: newLink.title,
+        url: newLink.url,
+      },
+      {
+        method: 'POST',
+        replace: true,
+      },
+    );
     setIsCreateDialogOpen(false);
     setNewLink({ url: '', title: '' });
-    toast({
-      title: 'Success',
-      description: 'Link created successfully',
-    });
   };
 
   const handleEditLink = (link: Link) => {

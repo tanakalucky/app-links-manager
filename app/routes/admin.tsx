@@ -82,8 +82,30 @@ export async function action({ request }: ActionFunctionArgs) {
 
         return { success: true, message: 'Link created successfully' };
       }
-      case 'update':
+      case 'update': {
+        const id = formData.get('id');
+        const title = formData.get('title');
+        const url = formData.get('url');
+
+        if (!id || !title || !url) {
+          return { success: false, message: 'ID, Title and URL are required' };
+        }
+
+        const response = await client.api['app-links'].update.$post({
+          json: {
+            id: Number(id),
+            name: title,
+            url: url,
+          },
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          return { success: false, message: error || 'Failed to update link' };
+        }
+
         return { success: true, message: 'Link updated successfully' };
+      }
       case 'delete':
         return { success: true, message: 'Link deleted successfully' };
       default:
@@ -113,6 +135,24 @@ export default function AdminLinks() {
   useEffect(() => {
     setSearchValue(query);
   }, [query]);
+
+  useEffect(() => {
+    if (navigation.state === 'loading' && navigation.formData) {
+      const intent = navigation.formData.get('intent');
+
+      if (intent === 'create') {
+        toast({
+          title: 'Success',
+          description: 'Link created successfully',
+        });
+      } else if (intent === 'update') {
+        toast({
+          title: 'Success',
+          description: 'Link updated successfully',
+        });
+      }
+    }
+  }, [navigation.state, toast]);
 
   const itemsPerPage = 10;
   const totalPages = Math.ceil(links.length / itemsPerPage);
@@ -159,14 +199,31 @@ export default function AdminLinks() {
 
   const handleUpdateLink = () => {
     if (!editingLink) return;
-    const { id, ...rest } = editingLink;
-    submit({ intent: 'update', id, ...rest }, { method: 'POST', replace: true });
+
+    if (!editingLink.title || !editingLink.url) {
+      toast({
+        title: 'Error',
+        description: 'Title and URL are required',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    submit(
+      {
+        intent: 'update',
+        id: editingLink.id,
+        title: editingLink.title,
+        url: editingLink.url,
+      },
+      {
+        method: 'POST',
+        replace: true,
+      },
+    );
+
     setIsEditDialogOpen(false);
     setEditingLink(null);
-    toast({
-      title: 'Success',
-      description: 'Link updated successfully',
-    });
   };
 
   const handleDeleteLink = (id: number) => {

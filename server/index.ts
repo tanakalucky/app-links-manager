@@ -42,6 +42,24 @@ const route = app
       console.error('Failed to create link:', error);
       return c.json({ error: 'Failed to create link' }, 500);
     }
+  })
+  .post('/app-links/update', async (c) => {
+    const { id, name, url } = await c.req.json<{ id: number; name: string; url: string }>();
+
+    try {
+      const result = await c.env.DB.prepare('UPDATE app_links SET name = ?, url = ? WHERE id = ? RETURNING *')
+        .bind(name, url, id)
+        .first<AppLink>();
+
+      if (!result) {
+        return c.json({ error: 'Link not found' }, 404);
+      }
+
+      return c.json(result);
+    } catch (error) {
+      console.error('Failed to update link:', error);
+      return c.json({ error: 'Failed to update link' }, 500);
+    }
   });
 
 export default app;

@@ -1,7 +1,9 @@
 import { type ActionFunctionArgs, type LoaderFunctionArgs } from '@remix-run/node';
 import { useLoaderData, useNavigation, useSubmit } from '@remix-run/react';
+import { hc } from 'hono/client';
 import { MoreVertical, Pencil, Plus, RefreshCw, Search, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { AppType } from 'server';
 import { Button } from '~/components/ui/button';
 import { Checkbox } from '~/components/ui/checkbox';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '~/components/ui/dialog';
@@ -15,11 +17,12 @@ import { Input } from '~/components/ui/input';
 import { Spinner } from '~/components/ui/spinner';
 import { useToast } from '~/hooks/use-toast';
 
+const client = hc<AppType>(import.meta.env.VITE_API_URL);
+
 interface Link {
   id: number;
   url: string;
   title: string;
-  createdAt: string;
 }
 
 export async function loader({ request }: LoaderFunctionArgs) {
@@ -27,24 +30,24 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const query = url.searchParams.get('q') || '';
 
   try {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    const allLinks = Array.from({ length: 40 }, (_, i) => ({
-      id: i + 1,
-      url: `https://example.com/link-${i + 1}`,
-      title: `Link ${i + 1}`,
-      createdAt: new Date(Date.now() - Math.random() * 10000000000).toISOString(),
-    }));
+    const data = await client.api['app-links'].$get();
+    const allLinks = await data.json();
 
     const filteredLinks = query
       ? allLinks.filter(
           (link) =>
-            link.title.toLowerCase().includes(query.toLowerCase()) ||
+            link.name.toLowerCase().includes(query.toLowerCase()) ||
             link.url.toLowerCase().includes(query.toLowerCase()),
         )
       : allLinks;
 
-    return { links: filteredLinks, query };
+    const mappedLinks = filteredLinks.map((link) => ({
+      id: link.id,
+      url: link.url,
+      title: link.name,
+    }));
+
+    return { links: mappedLinks, query };
   } catch (error) {
     console.error('Failed to fetch links:', error);
     throw new Error('Failed to fetch links');
@@ -236,9 +239,6 @@ export default function AdminLinks() {
                               <th className='p-4 text-left text-sm font-medium text-gray-500 dark:text-gray-400 cursor-pointer'>
                                 URL
                               </th>
-                              <th className='p-4 text-left text-sm font-medium text-gray-500 dark:text-gray-400 cursor-pointer'>
-                                Created At
-                              </th>
                               <th className='w-8 p-4'></th>
                             </tr>
                           </thead>
@@ -270,9 +270,6 @@ export default function AdminLinks() {
                                   >
                                     {link.url}
                                   </a>
-                                </td>
-                                <td className='p-4 text-sm text-gray-500 dark:text-gray-400'>
-                                  {new Date(link.createdAt).toLocaleDateString()}
                                 </td>
                                 <td className='p-4'>
                                   <DropdownMenu>

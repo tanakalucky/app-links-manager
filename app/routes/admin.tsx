@@ -106,8 +106,24 @@ export async function action({ request }: ActionFunctionArgs) {
 
         return { success: true, message: 'Link updated successfully' };
       }
-      case 'delete':
-        return { success: true, message: 'Link deleted successfully' };
+      case 'delete': {
+        const ids = formData.get('ids')?.toString().split(',').map(Number);
+
+        if (!ids?.length) {
+          return { success: false, message: 'No links selected' };
+        }
+
+        const response = await client.api['app-links'].delete.$post({
+          json: { ids },
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          return { success: false, message: error || 'Failed to delete links' };
+        }
+
+        return { success: true, message: 'Links deleted successfully' };
+      }
       default:
         return { success: false, message: 'Invalid action' };
     }
@@ -129,6 +145,8 @@ export default function AdminLinks() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingLink, setEditingLink] = useState<Link | null>(null);
   const [newLink, setNewLink] = useState({ url: '', title: '' });
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [deletingIds, setDeletingIds] = useState<number[]>([]);
 
   const isLoading = navigation.state === 'loading';
 
@@ -226,21 +244,30 @@ export default function AdminLinks() {
     setEditingLink(null);
   };
 
+  const handleDeleteConfirm = () => {
+    submit(
+      {
+        intent: 'delete',
+        ids: deletingIds.join(','),
+      },
+      {
+        method: 'POST',
+        replace: true,
+      },
+    );
+    setIsDeleteDialogOpen(false);
+    setDeletingIds([]);
+    setSelectedLinks([]);
+  };
+
   const handleDeleteLink = (id: number) => {
-    submit({ intent: 'delete', id }, { method: 'POST', replace: true });
-    toast({
-      title: 'Success',
-      description: 'Link deleted successfully',
-    });
+    setDeletingIds([id]);
+    setIsDeleteDialogOpen(true);
   };
 
   const handleDeleteSelected = () => {
-    submit({ intent: 'delete', ids: selectedLinks.join(',') }, { method: 'POST', replace: true });
-    setSelectedLinks([]);
-    toast({
-      title: 'Success',
-      description: 'Selected links deleted successfully',
-    });
+    setDeletingIds(selectedLinks);
+    setIsDeleteDialogOpen(true);
   };
 
   return (
@@ -504,6 +531,35 @@ export default function AdminLinks() {
               Cancel
             </Button>
             <Button onClick={handleUpdateLink}>Update</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete {deletingIds.length > 1 ? 'Links' : 'Link'}</DialogTitle>
+          </DialogHeader>
+          <div className='py-4'>
+            <p className='text-sm text-gray-600 dark:text-gray-400'>
+              Are you sure you want to delete{' '}
+              {deletingIds.length > 1 ? `these ${deletingIds.length} links` : 'this link'}? This action cannot be
+              undone.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button
+              variant='outline'
+              onClick={() => {
+                setIsDeleteDialogOpen(false);
+                setDeletingIds([]);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button variant='destructive' onClick={handleDeleteConfirm}>
+              Delete
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

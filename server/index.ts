@@ -60,6 +60,24 @@ const route = app
       console.error('Failed to update link:', error);
       return c.json({ error: 'Failed to update link' }, 500);
     }
+  })
+  .post('/app-links/delete', async (c) => {
+    const { ids } = await c.req.json<{ ids: number[] }>();
+
+    try {
+      const result = await c.env.DB.prepare('DELETE FROM app_links WHERE id IN (?) RETURNING *')
+        .bind(ids.join(','))
+        .all<AppLink>();
+
+      if (!result.results.length) {
+        return c.json({ error: 'No links found' }, 404);
+      }
+
+      return c.json(result.results);
+    } catch (error) {
+      console.error('Failed to delete links:', error);
+      return c.json({ error: 'Failed to delete links' }, 500);
+    }
   });
 
 export default app;

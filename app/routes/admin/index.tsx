@@ -1,33 +1,21 @@
 import { type ActionFunctionArgs, type LoaderFunctionArgs } from '@remix-run/node';
 import { useLoaderData, useNavigation, useSubmit } from '@remix-run/react';
 import { hc } from 'hono/client';
-import { MoreVertical, Pencil, RefreshCw, Trash2 } from 'lucide-react';
+import { RefreshCw, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { AppType } from 'server';
 import { Button } from '~/components/ui/button';
 import { Checkbox } from '~/components/ui/checkbox';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '~/components/ui/dropdown-menu';
 import { SearchInput } from '~/components/ui/search-input';
 import { Spinner } from '~/components/ui/spinner';
 import { DeleteLinkDialog } from '~/feature/admin/components/delete-link-dialog';
-import { EditLinkDialog } from '~/feature/admin/components/edit-link-dialog';
 import { Pagination } from '~/feature/app-links/components/pagination';
 import { usePagination } from '~/hooks/use-pagination';
 import { useToast } from '~/hooks/use-toast';
 import { AddLinkButton } from '../add-link';
+import { EditLinkButton } from '../edit-link';
 
 const client = hc<AppType>(import.meta.env.VITE_API_URL);
-
-interface Link {
-  id: number;
-  url: string;
-  title: string;
-}
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);
@@ -144,8 +132,6 @@ export default function AdminLinks() {
   const { toast } = useToast();
   const [searchValue, setSearchValue] = useState(query);
   const [selectedLinks, setSelectedLinks] = useState<number[]>([]);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [editingLink, setEditingLink] = useState<Link | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [deletingIds, setDeletingIds] = useState<number[]>([]);
 
@@ -186,31 +172,6 @@ export default function AdminLinks() {
     setSearchValue(value);
     setCurrentPage(1);
     submit({ q: value }, { replace: true });
-  };
-
-  const handleEditLink = (link: Link) => {
-    setEditingLink(link);
-    setIsEditDialogOpen(true);
-  };
-
-  const handleUpdateLink = (values: { id: number; title: string; url: string }) => {
-    if (!values.title || !values.url) {
-      toast({
-        title: 'Error',
-        description: 'Title and URL are required',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append('intent', 'update');
-    formData.append('id', values.id.toString());
-    formData.append('title', values.title);
-    formData.append('url', values.url);
-    submit(formData, { method: 'post', replace: true });
-    setIsEditDialogOpen(false);
-    setEditingLink(null);
   };
 
   const handleDeleteConfirm = (ids: number[]) => {
@@ -356,26 +317,19 @@ export default function AdminLinks() {
                                   </a>
                                 </td>
                                 <td className='p-4'>
-                                  <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                      <Button variant='ghost' size='sm' className='h-8 w-8 p-0'>
-                                        <MoreVertical className='h-4 w-4' />
-                                      </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align='end'>
-                                      <DropdownMenuItem onClick={() => handleEditLink(link)} className='gap-2'>
-                                        <Pencil className='h-4 w-4' />
-                                        Edit
-                                      </DropdownMenuItem>
-                                      <DropdownMenuItem
-                                        onClick={() => handleDeleteLink(link.id)}
-                                        className='gap-2 text-red-600 dark:text-red-400'
-                                      >
-                                        <Trash2 className='h-4 w-4' />
-                                        Delete
-                                      </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                  </DropdownMenu>
+                                  <div className='flex items-center justify-center gap-2'>
+                                    <EditLinkButton appLink={{ id: link.id, name: link.title, url: link.url }} />
+
+                                    <Button
+                                      variant='ghost'
+                                      size='sm'
+                                      onClick={() => handleDeleteLink(link.id)}
+                                      className='h-8 w-8 p-0 hover:bg-red-100 dark:hover:bg-red-900/20'
+                                    >
+                                      <Trash2 className='h-4 w-4 text-red-500 dark:text-red-400' />
+                                      <span className='sr-only'>Delete</span>
+                                    </Button>
+                                  </div>
                                 </td>
                               </tr>
                             ))}
@@ -409,13 +363,6 @@ export default function AdminLinks() {
           </>
         )}
       </main>
-
-      <EditLinkDialog
-        isOpen={isEditDialogOpen}
-        onOpenChange={setIsEditDialogOpen}
-        link={editingLink}
-        onSubmit={handleUpdateLink}
-      />
 
       <DeleteLinkDialog
         isOpen={isDeleteDialogOpen}

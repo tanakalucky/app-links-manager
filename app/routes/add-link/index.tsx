@@ -61,6 +61,8 @@ function AddLinkDialog({ isOpen, onOpenChange }: DialogProps) {
   const { toast } = useToast();
   const [values, setValues] = useState({ title: '', url: '' });
 
+  console.log('rendering add link dialog');
+
   const handleSubmit = () => {
     handleCreateLink(values);
     setValues({ title: '', url: '' });

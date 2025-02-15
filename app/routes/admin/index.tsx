@@ -1,8 +1,7 @@
-import { type LoaderFunctionArgs } from '@remix-run/node';
-import { useLoaderData, useNavigation, useSubmit } from '@remix-run/react';
+import { useLoaderData, useNavigation } from '@remix-run/react';
 import { hc } from 'hono/client';
 import { RefreshCw } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { AppType } from 'server';
 import { Pagination } from '~/components/app-links/pagination';
 import { Button } from '~/components/ui/button';
@@ -16,29 +15,13 @@ import { EditLinkButton } from '../edit-link';
 
 const client = hc<AppType>(import.meta.env.VITE_API_URL);
 
-export async function loader({ request }: LoaderFunctionArgs) {
-  const url = new URL(request.url);
-  const query = url.searchParams.get('q') || '';
-
+export async function loader() {
   try {
     const data = await client.api['app-links'].$get();
-    const allLinks = await data.json();
 
-    const filteredLinks = query
-      ? allLinks.filter(
-          (link) =>
-            link.name.toLowerCase().includes(query.toLowerCase()) ||
-            link.url.toLowerCase().includes(query.toLowerCase()),
-        )
-      : allLinks;
+    const links = await data.json();
 
-    const mappedLinks = filteredLinks.map((link) => ({
-      id: link.id,
-      url: link.url,
-      name: link.name,
-    }));
-
-    return { links: mappedLinks, query };
+    return { links };
   } catch (error) {
     console.error('Failed to fetch links:', error);
     throw new Error('Failed to fetch links');
@@ -46,17 +29,18 @@ export async function loader({ request }: LoaderFunctionArgs) {
 }
 
 export default function AdminLinks() {
-  const { links, query } = useLoaderData<typeof loader>();
+  const { links } = useLoaderData<typeof loader>();
   const navigation = useNavigation();
-  const submit = useSubmit();
-  const [searchValue, setSearchValue] = useState(query);
+  const [searchValue, setSearchValue] = useState('');
   const [selectedLinks, setSelectedLinks] = useState<number[]>([]);
 
-  const isLoading = navigation.state === 'loading';
-
-  useEffect(() => {
-    setSearchValue(query);
-  }, [query]);
+  const filteredLinks = searchValue
+    ? links.filter(
+        (link) =>
+          link.name.toLowerCase().includes(searchValue.toLowerCase()) ||
+          link.url.toLowerCase().includes(searchValue.toLowerCase()),
+      )
+    : links;
 
   const {
     currentPage,
@@ -65,12 +49,13 @@ export default function AdminLinks() {
     startIndex,
     endIndex,
     totalPages,
-  } = usePagination(links, 10);
+  } = usePagination(filteredLinks, 10);
+
+  const isLoading = navigation.state === 'loading';
 
   const handleSearch = (value: string) => {
     setSearchValue(value);
     setCurrentPage(1);
-    submit({ q: value }, { replace: true });
   };
 
   return (
@@ -98,7 +83,7 @@ export default function AdminLinks() {
             {links === undefined ? (
               <div className='flex flex-col items-center justify-center min-h-[400px] text-center'>
                 <p className='text-red-500 mb-4'>Failed to load links</p>
-                <Button onClick={() => submit(null)} variant='outline' className='gap-2'>
+                <Button onClick={() => setSearchValue('')} variant='outline' className='gap-2'>
                   <RefreshCw className='h-4 w-4' />
                   Try again
                 </Button>
@@ -111,7 +96,7 @@ export default function AdminLinks() {
                       {searchValue ? `No links found matching "${searchValue}"` : 'No links available'}
                     </p>
                     {searchValue && (
-                      <Button onClick={() => handleSearch('')} variant='outline' size='sm'>
+                      <Button onClick={() => setSearchValue('')} variant='outline' size='sm'>
                         Clear search
                       </Button>
                     )}

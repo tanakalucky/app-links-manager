@@ -1,6 +1,6 @@
 import { Button } from '~/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '~/components/ui/dialog';
-import { DialogProps } from '../types';
+import { DialogProps } from './types';
 
 interface DeleteLinkDialogProps extends DialogProps {
   ids: number[];

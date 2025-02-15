@@ -1,48 +1,52 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '~/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '~/components/ui/dialog';
 import { Input } from '~/components/ui/input';
-import { DialogProps } from '../types';
+import { DialogProps, Link } from './types';
 
-interface CreateLinkDialogProps extends DialogProps {
-  defaultValues?: {
-    title: string;
-    url: string;
-  };
-  onSubmit: (values: { title: string; url: string }) => void;
+interface EditLinkDialogProps extends DialogProps {
+  link: Link | null;
+  onSubmit: (values: { id: number; title: string; url: string }) => void;
 }
 
-export function CreateLinkDialog({ isOpen, onOpenChange, defaultValues, onSubmit }: CreateLinkDialogProps) {
-  const [values, setValues] = useState(defaultValues || { title: '', url: '' });
+export function EditLinkDialog({ isOpen, onOpenChange, link, onSubmit }: EditLinkDialogProps) {
+  const [values, setValues] = useState(link || { id: 0, title: '', url: '' });
+
+  useEffect(() => {
+    if (link) {
+      setValues(link);
+    }
+  }, [link]);
 
   const handleSubmit = () => {
-    onSubmit(values);
-    setValues({ title: '', url: '' });
+    if (link) {
+      onSubmit(values);
+    }
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Add New Link</DialogTitle>
+          <DialogTitle>Edit Link</DialogTitle>
         </DialogHeader>
         <div className='space-y-4 py-4'>
           <div className='space-y-2'>
-            <label htmlFor='title' className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+            <label htmlFor='edit-title' className='text-sm font-medium text-gray-700 dark:text-gray-300'>
               Title
             </label>
             <Input
-              id='title'
+              id='edit-title'
               value={values.title}
               onChange={(e) => setValues((prev) => ({ ...prev, title: e.target.value }))}
             />
           </div>
           <div className='space-y-2'>
-            <label htmlFor='url' className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+            <label htmlFor='edit-url' className='text-sm font-medium text-gray-700 dark:text-gray-300'>
               URL
             </label>
             <Input
-              id='url'
+              id='edit-url'
               type='url'
               value={values.url}
               onChange={(e) => setValues((prev) => ({ ...prev, url: e.target.value }))}
@@ -50,16 +54,10 @@ export function CreateLinkDialog({ isOpen, onOpenChange, defaultValues, onSubmit
           </div>
         </div>
         <DialogFooter>
-          <Button
-            variant='outline'
-            onClick={() => {
-              onOpenChange(false);
-              setValues({ title: '', url: '' });
-            }}
-          >
+          <Button variant='outline' onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button onClick={handleSubmit}>Create</Button>
+          <Button onClick={handleSubmit}>Update</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

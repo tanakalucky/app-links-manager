@@ -1,12 +1,9 @@
 import { type ActionFunctionArgs, type LoaderFunctionArgs } from '@remix-run/node';
 import { useLoaderData, useNavigation, useSubmit } from '@remix-run/react';
 import { hc } from 'hono/client';
-import { MoreVertical, Pencil, Plus, RefreshCw, Search, Trash2 } from 'lucide-react';
+import { MoreVertical, Pencil, Plus, RefreshCw, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { AppType } from 'server';
-import { CreateLinkDialog } from '~/components/admin/dialogs/create-link-dialog';
-import { DeleteLinkDialog } from '~/components/admin/dialogs/delete-link-dialog';
-import { EditLinkDialog } from '~/components/admin/dialogs/edit-link-dialog';
 import { Button } from '~/components/ui/button';
 import { Checkbox } from '~/components/ui/checkbox';
 import {
@@ -15,8 +12,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '~/components/ui/dropdown-menu';
-import { Input } from '~/components/ui/input';
+import { SearchInput } from '~/components/ui/search-input';
 import { Spinner } from '~/components/ui/spinner';
+import { CreateLinkDialog } from '~/feature/admin/components/create-link-dialog';
+import { DeleteLinkDialog } from '~/feature/admin/components/delete-link-dialog';
+import { EditLinkDialog } from '~/feature/admin/components/edit-link-dialog';
 import { useToast } from '~/hooks/use-toast';
 
 const client = hc<AppType>(import.meta.env.VITE_API_URL);
@@ -264,16 +264,7 @@ export default function AdminLinks() {
         <div className='container mx-auto px-4 h-16 flex items-center justify-between'>
           <h1 className='text-2xl font-bold text-gray-900 dark:text-gray-100'>Link Management</h1>
           <div className='flex items-center gap-4'>
-            <div className='relative w-72'>
-              <Input
-                type='search'
-                placeholder='Search links...'
-                value={searchValue}
-                onChange={(e) => handleSearch(e.target.value)}
-                className='pl-10'
-              />
-              <Search className='absolute left-3 top-2.5 h-4 w-4 text-gray-500 dark:text-gray-400' />
-            </div>
+            <SearchInput placeholder='Search links...' value={searchValue} onChange={handleSearch} />
             <Button onClick={() => setIsCreateDialogOpen(true)} className='gap-2'>
               <Plus className='h-4 w-4' />
               Add Link

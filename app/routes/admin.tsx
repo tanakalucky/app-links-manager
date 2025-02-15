@@ -4,9 +4,11 @@ import { hc } from 'hono/client';
 import { MoreVertical, Pencil, Plus, RefreshCw, Search, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { AppType } from 'server';
+import { CreateLinkDialog } from '~/components/admin/dialogs/create-link-dialog';
+import { DeleteLinkDialog } from '~/components/admin/dialogs/delete-link-dialog';
+import { EditLinkDialog } from '~/components/admin/dialogs/edit-link-dialog';
 import { Button } from '~/components/ui/button';
 import { Checkbox } from '~/components/ui/checkbox';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '~/components/ui/dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -144,7 +146,6 @@ export default function AdminLinks() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingLink, setEditingLink] = useState<Link | null>(null);
-  const [newLink, setNewLink] = useState({ url: '', title: '' });
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [deletingIds, setDeletingIds] = useState<number[]>([]);
 
@@ -185,8 +186,8 @@ export default function AdminLinks() {
     submit({ q: value }, { replace: true });
   };
 
-  const handleCreateLink = () => {
-    if (!newLink.title || !newLink.url) {
+  const handleCreateLink = (values: { title: string; url: string }) => {
+    if (!values.title || !values.url) {
       toast({
         title: 'Error',
         description: 'Title and URL are required',
@@ -195,19 +196,12 @@ export default function AdminLinks() {
       return;
     }
 
-    submit(
-      {
-        intent: 'create',
-        title: newLink.title,
-        url: newLink.url,
-      },
-      {
-        method: 'POST',
-        replace: true,
-      },
-    );
+    const formData = new FormData();
+    formData.append('intent', 'create');
+    formData.append('title', values.title);
+    formData.append('url', values.url);
+    submit(formData, { method: 'post', replace: true });
     setIsCreateDialogOpen(false);
-    setNewLink({ url: '', title: '' });
   };
 
   const handleEditLink = (link: Link) => {
@@ -215,10 +209,8 @@ export default function AdminLinks() {
     setIsEditDialogOpen(true);
   };
 
-  const handleUpdateLink = () => {
-    if (!editingLink) return;
-
-    if (!editingLink.title || !editingLink.url) {
+  const handleUpdateLink = (values: { id: number; title: string; url: string }) => {
+    if (!values.title || !values.url) {
       toast({
         title: 'Error',
         description: 'Title and URL are required',
@@ -227,34 +219,30 @@ export default function AdminLinks() {
       return;
     }
 
-    submit(
-      {
-        intent: 'update',
-        id: editingLink.id,
-        title: editingLink.title,
-        url: editingLink.url,
-      },
-      {
-        method: 'POST',
-        replace: true,
-      },
-    );
-
+    const formData = new FormData();
+    formData.append('intent', 'update');
+    formData.append('id', values.id.toString());
+    formData.append('title', values.title);
+    formData.append('url', values.url);
+    submit(formData, { method: 'post', replace: true });
     setIsEditDialogOpen(false);
     setEditingLink(null);
   };
 
-  const handleDeleteConfirm = () => {
-    submit(
-      {
-        intent: 'delete',
-        ids: deletingIds.join(','),
-      },
-      {
-        method: 'POST',
-        replace: true,
-      },
-    );
+  const handleDeleteConfirm = (ids: number[]) => {
+    if (!ids.length) {
+      toast({
+        title: 'Error',
+        description: 'No links selected',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('intent', 'delete');
+    formData.append('ids', ids.join(','));
+    submit(formData, { method: 'post', replace: true });
     setIsDeleteDialogOpen(false);
     setDeletingIds([]);
     setSelectedLinks([]);
@@ -455,114 +443,21 @@ export default function AdminLinks() {
         )}
       </main>
 
-      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add New Link</DialogTitle>
-          </DialogHeader>
-          <div className='space-y-4 py-4'>
-            <div className='space-y-2'>
-              <label htmlFor='title' className='text-sm font-medium text-gray-700 dark:text-gray-300'>
-                Title
-              </label>
-              <Input
-                id='title'
-                value={newLink.title}
-                onChange={(e) => setNewLink((prev) => ({ ...prev, title: e.target.value }))}
-              />
-            </div>
-            <div className='space-y-2'>
-              <label htmlFor='url' className='text-sm font-medium text-gray-700 dark:text-gray-300'>
-                URL
-              </label>
-              <Input
-                id='url'
-                type='url'
-                value={newLink.url}
-                onChange={(e) => setNewLink((prev) => ({ ...prev, url: e.target.value }))}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant='outline' onClick={() => setIsCreateDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleCreateLink}>Create</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <CreateLinkDialog isOpen={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen} onSubmit={handleCreateLink} />
 
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Edit Link</DialogTitle>
-          </DialogHeader>
-          <div className='space-y-4 py-4'>
-            <div className='space-y-2'>
-              <label htmlFor='edit-title' className='text-sm font-medium text-gray-700 dark:text-gray-300'>
-                Title
-              </label>
-              <Input
-                id='edit-title'
-                value={editingLink?.title || ''}
-                onChange={(e) => setEditingLink((prev) => (prev ? { ...prev, title: e.target.value } : null))}
-              />
-            </div>
-            <div className='space-y-2'>
-              <label htmlFor='edit-url' className='text-sm font-medium text-gray-700 dark:text-gray-300'>
-                URL
-              </label>
-              <Input
-                id='edit-url'
-                type='url'
-                value={editingLink?.url || ''}
-                onChange={(e) => setEditingLink((prev) => (prev ? { ...prev, url: e.target.value } : null))}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant='outline'
-              onClick={() => {
-                setIsEditDialogOpen(false);
-                setEditingLink(null);
-              }}
-            >
-              Cancel
-            </Button>
-            <Button onClick={handleUpdateLink}>Update</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <EditLinkDialog
+        isOpen={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        link={editingLink}
+        onSubmit={handleUpdateLink}
+      />
 
-      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete {deletingIds.length > 1 ? 'Links' : 'Link'}</DialogTitle>
-          </DialogHeader>
-          <div className='py-4'>
-            <p className='text-sm text-gray-600 dark:text-gray-400'>
-              Are you sure you want to delete{' '}
-              {deletingIds.length > 1 ? `these ${deletingIds.length} links` : 'this link'}? This action cannot be
-              undone.
-            </p>
-          </div>
-          <DialogFooter>
-            <Button
-              variant='outline'
-              onClick={() => {
-                setIsDeleteDialogOpen(false);
-                setDeletingIds([]);
-              }}
-            >
-              Cancel
-            </Button>
-            <Button variant='destructive' onClick={handleDeleteConfirm}>
-              Delete
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <DeleteLinkDialog
+        isOpen={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        ids={deletingIds}
+        onConfirm={handleDeleteConfirm}
+      />
     </div>
   );
 }

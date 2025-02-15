@@ -1,6 +1,5 @@
 import { D1Database } from '@cloudflare/workers-types';
 import { Hono } from 'hono';
-import { cache } from 'hono/cache';
 import { csrf } from 'hono/csrf';
 import { AppLink } from '~/types/app-link';
 
@@ -15,10 +14,10 @@ app.use(csrf());
 const route = app
   .get(
     '/app-links',
-    cache({
-      cacheName: 'app-links',
-      cacheControl: 'max-age=10800',
-    }),
+    // cache({
+    //   cacheName: 'app-links',
+    //   cacheControl: 'max-age=10800',
+    // }),
     async (c) => {
       const { results } = await c.env.DB.prepare('SELECT * FROM app_links').all<AppLink>();
 

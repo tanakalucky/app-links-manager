@@ -10,7 +10,6 @@ import { Checkbox } from '~/components/ui/checkbox';
 import { SearchInput } from '~/components/ui/search-input';
 import { Spinner } from '~/components/ui/spinner';
 import { usePagination } from '~/hooks/use-pagination';
-import { useToast } from '~/hooks/use-toast';
 import { AddLinkButton } from '../add-link';
 import { DeleteLinkButton, DeleteLinksButton } from '../delete-link';
 import { EditLinkButton } from '../edit-link';
@@ -50,7 +49,6 @@ export default function AdminLinks() {
   const { links, query } = useLoaderData<typeof loader>();
   const navigation = useNavigation();
   const submit = useSubmit();
-  const { toast } = useToast();
   const [searchValue, setSearchValue] = useState(query);
   const [selectedLinks, setSelectedLinks] = useState<number[]>([]);
 
@@ -59,24 +57,6 @@ export default function AdminLinks() {
   useEffect(() => {
     setSearchValue(query);
   }, [query]);
-
-  useEffect(() => {
-    if (navigation.state === 'loading' && navigation.formData) {
-      const intent = navigation.formData.get('intent');
-
-      if (intent === 'create') {
-        toast({
-          title: 'Success',
-          description: 'Link created successfully',
-        });
-      } else if (intent === 'update') {
-        toast({
-          title: 'Success',
-          description: 'Link updated successfully',
-        });
-      }
-    }
-  }, [navigation.state, toast]);
 
   const {
     currentPage,

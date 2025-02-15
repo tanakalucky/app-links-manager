@@ -1,7 +1,7 @@
 import { type ActionFunctionArgs, type LoaderFunctionArgs } from '@remix-run/node';
 import { useLoaderData, useNavigation, useSubmit } from '@remix-run/react';
 import { hc } from 'hono/client';
-import { MoreVertical, Pencil, Plus, RefreshCw, Trash2 } from 'lucide-react';
+import { MoreVertical, Pencil, RefreshCw, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { AppType } from 'server';
 import { Button } from '~/components/ui/button';
@@ -14,12 +14,12 @@ import {
 } from '~/components/ui/dropdown-menu';
 import { SearchInput } from '~/components/ui/search-input';
 import { Spinner } from '~/components/ui/spinner';
-import { CreateLinkDialog } from '~/feature/admin/components/create-link-dialog';
 import { DeleteLinkDialog } from '~/feature/admin/components/delete-link-dialog';
 import { EditLinkDialog } from '~/feature/admin/components/edit-link-dialog';
 import { Pagination } from '~/feature/app-links/components/pagination';
 import { usePagination } from '~/hooks/use-pagination';
 import { useToast } from '~/hooks/use-toast';
+import { AddLinkButton } from '../add-link';
 
 const client = hc<AppType>(import.meta.env.VITE_API_URL);
 
@@ -144,7 +144,6 @@ export default function AdminLinks() {
   const { toast } = useToast();
   const [searchValue, setSearchValue] = useState(query);
   const [selectedLinks, setSelectedLinks] = useState<number[]>([]);
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingLink, setEditingLink] = useState<Link | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -187,24 +186,6 @@ export default function AdminLinks() {
     setSearchValue(value);
     setCurrentPage(1);
     submit({ q: value }, { replace: true });
-  };
-
-  const handleCreateLink = (values: { title: string; url: string }) => {
-    if (!values.title || !values.url) {
-      toast({
-        title: 'Error',
-        description: 'Title and URL are required',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append('intent', 'create');
-    formData.append('title', values.title);
-    formData.append('url', values.url);
-    submit(formData, { method: 'post', replace: true });
-    setIsCreateDialogOpen(false);
   };
 
   const handleEditLink = (link: Link) => {
@@ -266,12 +247,11 @@ export default function AdminLinks() {
       <header className='fixed top-0 left-0 right-0 z-10 border-b bg-white/80 backdrop-blur-sm dark:bg-gray-950/80 dark:border-gray-800'>
         <div className='container mx-auto px-4 h-16 flex items-center justify-between'>
           <h1 className='text-2xl font-bold text-gray-900 dark:text-gray-100'>Link Management</h1>
+
           <div className='flex items-center gap-4'>
             <SearchInput placeholder='Search links...' value={searchValue} onChange={handleSearch} />
-            <Button onClick={() => setIsCreateDialogOpen(true)} className='gap-2'>
-              <Plus className='h-4 w-4' />
-              Add Link
-            </Button>
+
+            <AddLinkButton />
           </div>
         </div>
       </header>
@@ -429,8 +409,6 @@ export default function AdminLinks() {
           </>
         )}
       </main>
-
-      <CreateLinkDialog isOpen={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen} onSubmit={handleCreateLink} />
 
       <EditLinkDialog
         isOpen={isEditDialogOpen}

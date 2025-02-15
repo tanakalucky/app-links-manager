@@ -6,6 +6,7 @@ import { Button } from '~/components/ui/button';
 import './tailwind.css';
 import { ReactNode } from 'react';
 
+import { Toaster } from './components/ui/toaster';
 import styles from './tailwind.css?url';
 
 export const links: LinksFunction = () => [
@@ -65,6 +66,7 @@ export function Layout({ children }: { children: ReactNode }) {
       </head>
       <body>
         {children}
+        <Toaster />
         <ScrollRestoration />
         <Scripts />
       </body>

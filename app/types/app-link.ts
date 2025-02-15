@@ -3,3 +3,7 @@ export interface AppLink {
   name: string;
   url: string;
 }
+
+export interface AppLinkWithThumbnail extends AppLink {
+  thumbnail: string;
+}

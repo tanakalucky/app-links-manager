@@ -1,18 +1,18 @@
-import { type ActionFunctionArgs, type LoaderFunctionArgs } from '@remix-run/node';
+import { type LoaderFunctionArgs } from '@remix-run/node';
 import { useLoaderData, useNavigation, useSubmit } from '@remix-run/react';
 import { hc } from 'hono/client';
-import { RefreshCw, Trash2 } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { AppType } from 'server';
 import { Button } from '~/components/ui/button';
 import { Checkbox } from '~/components/ui/checkbox';
 import { SearchInput } from '~/components/ui/search-input';
 import { Spinner } from '~/components/ui/spinner';
-import { DeleteLinkDialog } from '~/feature/admin/components/delete-link-dialog';
 import { Pagination } from '~/feature/app-links/components/pagination';
 import { usePagination } from '~/hooks/use-pagination';
 import { useToast } from '~/hooks/use-toast';
 import { AddLinkButton } from '../add-link';
+import { DeleteLinkButton, DeleteLinksButton } from '../delete-link';
 import { EditLinkButton } from '../edit-link';
 
 const client = hc<AppType>(import.meta.env.VITE_API_URL);
@@ -46,85 +46,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
   }
 }
 
-export async function action({ request }: ActionFunctionArgs) {
-  const formData = await request.formData();
-  const intent = formData.get('intent');
-
-  try {
-    switch (intent) {
-      case 'create': {
-        const title = formData.get('title');
-        const url = formData.get('url');
-
-        if (!title || !url) {
-          return { success: false, message: 'Title and URL are required' };
-        }
-
-        const response = await client.api['app-links'].create.$post({
-          json: {
-            name: title,
-            url: url,
-          },
-        });
-
-        if (!response.ok) {
-          const error = await response.json();
-          return { success: false, message: error || 'Failed to create link' };
-        }
-
-        return { success: true, message: 'Link created successfully' };
-      }
-      case 'update': {
-        const id = formData.get('id');
-        const title = formData.get('title');
-        const url = formData.get('url');
-
-        if (!id || !title || !url) {
-          return { success: false, message: 'ID, Title and URL are required' };
-        }
-
-        const response = await client.api['app-links'].update.$post({
-          json: {
-            id: Number(id),
-            name: title,
-            url: url,
-          },
-        });
-
-        if (!response.ok) {
-          const error = await response.json();
-          return { success: false, message: error || 'Failed to update link' };
-        }
-
-        return { success: true, message: 'Link updated successfully' };
-      }
-      case 'delete': {
-        const ids = formData.get('ids')?.toString().split(',').map(Number);
-
-        if (!ids?.length) {
-          return { success: false, message: 'No links selected' };
-        }
-
-        const response = await client.api['app-links'].delete.$post({
-          json: { ids },
-        });
-
-        if (!response.ok) {
-          const error = await response.json();
-          return { success: false, message: error || 'Failed to delete links' };
-        }
-
-        return { success: true, message: 'Links deleted successfully' };
-      }
-      default:
-        return { success: false, message: 'Invalid action' };
-    }
-  } catch (error) {
-    console.error('Action failed:', error);
-    return { success: false, message: 'Action failed' };
-  }
-}
-
 export default function AdminLinks() {
   const { links, query } = useLoaderData<typeof loader>();
   const navigation = useNavigation();
@@ -132,8 +53,6 @@ export default function AdminLinks() {
   const { toast } = useToast();
   const [searchValue, setSearchValue] = useState(query);
   const [selectedLinks, setSelectedLinks] = useState<number[]>([]);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [deletingIds, setDeletingIds] = useState<number[]>([]);
 
   const isLoading = navigation.state === 'loading';
 
@@ -172,35 +91,6 @@ export default function AdminLinks() {
     setSearchValue(value);
     setCurrentPage(1);
     submit({ q: value }, { replace: true });
-  };
-
-  const handleDeleteConfirm = (ids: number[]) => {
-    if (!ids.length) {
-      toast({
-        title: 'Error',
-        description: 'No links selected',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append('intent', 'delete');
-    formData.append('ids', ids.join(','));
-    submit(formData, { method: 'post', replace: true });
-    setIsDeleteDialogOpen(false);
-    setDeletingIds([]);
-    setSelectedLinks([]);
-  };
-
-  const handleDeleteLink = (id: number) => {
-    setDeletingIds([id]);
-    setIsDeleteDialogOpen(true);
-  };
-
-  const handleDeleteSelected = () => {
-    setDeletingIds(selectedLinks);
-    setIsDeleteDialogOpen(true);
   };
 
   return (
@@ -254,9 +144,8 @@ export default function AdminLinks() {
                           <p className='text-sm text-gray-600 dark:text-gray-400'>
                             {selectedLinks.length} items selected
                           </p>
-                          <Button variant='destructive' size='sm' onClick={handleDeleteSelected}>
-                            Delete Selected
-                          </Button>
+
+                          <DeleteLinksButton ids={selectedLinks} afterDelete={() => setSelectedLinks([])} />
                         </div>
                       </div>
                     )}
@@ -287,6 +176,7 @@ export default function AdminLinks() {
                               <th className='w-8 p-4'></th>
                             </tr>
                           </thead>
+
                           <tbody>
                             {currentLinks.map((link) => (
                               <tr
@@ -320,15 +210,7 @@ export default function AdminLinks() {
                                   <div className='flex items-center justify-center gap-2'>
                                     <EditLinkButton appLink={{ id: link.id, name: link.title, url: link.url }} />
 
-                                    <Button
-                                      variant='ghost'
-                                      size='sm'
-                                      onClick={() => handleDeleteLink(link.id)}
-                                      className='h-8 w-8 p-0 hover:bg-red-100 dark:hover:bg-red-900/20'
-                                    >
-                                      <Trash2 className='h-4 w-4 text-red-500 dark:text-red-400' />
-                                      <span className='sr-only'>Delete</span>
-                                    </Button>
+                                    <DeleteLinkButton id={link.id} />
                                   </div>
                                 </td>
                               </tr>
@@ -363,13 +245,6 @@ export default function AdminLinks() {
           </>
         )}
       </main>
-
-      <DeleteLinkDialog
-        isOpen={isDeleteDialogOpen}
-        onOpenChange={setIsDeleteDialogOpen}
-        ids={deletingIds}
-        onConfirm={handleDeleteConfirm}
-      />
     </div>
   );
 }

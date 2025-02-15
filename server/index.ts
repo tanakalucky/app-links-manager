@@ -57,8 +57,10 @@ const route = app
     const { ids } = await c.req.json<{ ids: number[] }>();
 
     try {
-      const result = await c.env.DB.prepare('DELETE FROM app_links WHERE id IN (?) RETURNING *')
-        .bind(ids.join(','))
+      const placeholders = ids.map(() => '?').join(',');
+
+      const result = await c.env.DB.prepare(`DELETE FROM app_links WHERE id IN (${placeholders}) RETURNING *`)
+        .bind(...ids)
         .all<AppLink>();
 
       if (!result.results.length) {

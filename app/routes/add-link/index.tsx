@@ -7,8 +7,8 @@ import { AppType } from 'server';
 import { Button } from '~/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '~/components/ui/dialog';
 import { Input } from '~/components/ui/input';
-import { DialogProps } from '~/feature/admin/components/types';
 import { useToast } from '~/hooks/use-toast';
+import { DialogProps } from '~/types/dialog';
 
 const client = hc<AppType>(import.meta.env.VITE_API_URL);
 
@@ -61,8 +61,6 @@ function AddLinkDialog({ isOpen, onOpenChange }: DialogProps) {
   const { toast } = useToast();
   const [values, setValues] = useState({ title: '', url: '' });
 
-  console.log('rendering add link dialog');
-
   const handleSubmit = () => {
     handleCreateLink(values);
     setValues({ title: '', url: '' });
@@ -81,10 +79,12 @@ function AddLinkDialog({ isOpen, onOpenChange }: DialogProps) {
     const formData = new FormData();
     formData.append('title', values.title);
     formData.append('url', values.url);
+
     fetcher.submit(formData, {
       method: 'post',
-      action: '/create-link?index',
+      action: '/add-link?index',
     });
+
     onOpenChange(false);
   };
 

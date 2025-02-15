@@ -2,7 +2,7 @@ import { ActionFunctionArgs } from '@remix-run/node';
 import { useFetcher } from '@remix-run/react';
 import { hc } from 'hono/client';
 import { Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AppType } from 'server';
 import { Button } from '~/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '~/components/ui/dialog';
@@ -71,8 +71,16 @@ interface DeleteLinkDialogProps extends DialogProps {
 }
 
 function DeleteLinkDialog({ isOpen, onOpenChange, ids, afterDelete }: DeleteLinkDialogProps) {
-  const fetcher = useFetcher();
+  const fetcher = useFetcher<{ success: boolean; message: string }>();
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (fetcher.data?.success) {
+      onOpenChange(false);
+
+      afterDelete?.();
+    }
+  }, [fetcher.data]);
 
   const handleDelete = () => {
     if (!ids.length) {
@@ -85,10 +93,6 @@ function DeleteLinkDialog({ isOpen, onOpenChange, ids, afterDelete }: DeleteLink
     }
 
     fetcher.submit({ ids: ids.join(',') }, { method: 'post', action: '/delete-link?index' });
-
-    onOpenChange(false);
-
-    afterDelete?.();
   };
 
   return (

@@ -23,8 +23,7 @@ export async function loader() {
 
     return { links };
   } catch (error) {
-    console.error('Failed to fetch links:', error);
-    throw new Error('Failed to fetch links');
+    throw new Error(`Failed to fetch links: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
 

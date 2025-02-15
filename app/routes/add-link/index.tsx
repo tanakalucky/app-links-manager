@@ -2,7 +2,7 @@ import { type ActionFunctionArgs } from '@remix-run/node';
 import { useFetcher } from '@remix-run/react';
 import { hc } from 'hono/client';
 import { Plus } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AppType } from 'server';
 import { Button } from '~/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '~/components/ui/dialog';
@@ -57,9 +57,15 @@ export function AddLinkButton() {
 }
 
 function AddLinkDialog({ isOpen, onOpenChange }: DialogProps) {
-  const fetcher = useFetcher();
+  const fetcher = useFetcher<{ success: boolean; message: string }>();
   const { toast } = useToast();
   const [values, setValues] = useState({ name: '', url: '' });
+
+  useEffect(() => {
+    if (fetcher.data?.success) {
+      onOpenChange(false);
+    }
+  }, [fetcher.data]);
 
   const handleSubmit = () => {
     handleCreateLink(values);
@@ -84,8 +90,6 @@ function AddLinkDialog({ isOpen, onOpenChange }: DialogProps) {
       method: 'post',
       action: '/add-link?index',
     });
-
-    onOpenChange(false);
   };
 
   return (

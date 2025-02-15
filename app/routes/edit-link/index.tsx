@@ -2,7 +2,7 @@ import { ActionFunctionArgs } from '@remix-run/cloudflare';
 import { useFetcher } from '@remix-run/react';
 import { hc } from 'hono/client';
 import { Pencil } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AppType } from 'server';
 import { Button } from '~/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '~/components/ui/dialog';
@@ -65,9 +65,15 @@ interface EditLinkDialogProps extends DialogProps {
 }
 
 function EditLinkDialog({ isOpen, onOpenChange, appLink: link }: EditLinkDialogProps) {
-  const fetcher = useFetcher();
+  const fetcher = useFetcher<{ success: boolean; message: string }>();
   const { toast } = useToast();
   const [values, setValues] = useState(link);
+
+  useEffect(() => {
+    if (fetcher.data?.success) {
+      onOpenChange(false);
+    }
+  }, [fetcher.data]);
 
   const handleSubmit = () => {
     handleUpdateLink({ id: values.id, name: values.name, url: values.url });
@@ -84,8 +90,6 @@ function EditLinkDialog({ isOpen, onOpenChange, appLink: link }: EditLinkDialogP
     }
 
     fetcher.submit(values, { method: 'post', action: '/edit-link?index' });
-
-    onOpenChange(false);
   };
 
   return (

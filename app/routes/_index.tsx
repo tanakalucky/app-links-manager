@@ -27,9 +27,8 @@ export async function loader() {
     }));
 
     return { apps };
-  } catch (e) {
-    console.error('Failed to fetch apps', e);
-    throw new Error('Failed to fetch apps');
+  } catch (error) {
+    throw new Error(`Failed to fetch apps: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
 

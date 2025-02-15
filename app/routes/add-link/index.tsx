@@ -14,17 +14,17 @@ const client = hc<AppType>(import.meta.env.VITE_API_URL);
 
 export async function action({ request }: ActionFunctionArgs) {
   const formData = await request.formData();
-  const title = formData.get('title');
+  const name = formData.get('name');
   const url = formData.get('url');
 
-  if (!title || !url) {
-    return { success: false, message: 'Title and URL are required' };
+  if (!name || !url) {
+    return { success: false, message: 'Name and URL are required' };
   }
 
   try {
     const response = await client.api['app-links'].create.$post({
       json: {
-        name: title,
+        name: name,
         url: url,
       },
     });
@@ -59,25 +59,25 @@ export function AddLinkButton() {
 function AddLinkDialog({ isOpen, onOpenChange }: DialogProps) {
   const fetcher = useFetcher();
   const { toast } = useToast();
-  const [values, setValues] = useState({ title: '', url: '' });
+  const [values, setValues] = useState({ name: '', url: '' });
 
   const handleSubmit = () => {
     handleCreateLink(values);
-    setValues({ title: '', url: '' });
+    setValues({ name: '', url: '' });
   };
 
-  const handleCreateLink = (values: { title: string; url: string }) => {
-    if (!values.title || !values.url) {
+  const handleCreateLink = (values: { name: string; url: string }) => {
+    if (!values.name || !values.url) {
       toast({
         title: 'Error',
-        description: 'Title and URL are required',
+        description: 'Name and URL are required',
         variant: 'destructive',
       });
       return;
     }
 
     const formData = new FormData();
-    formData.append('title', values.title);
+    formData.append('name', values.name);
     formData.append('url', values.url);
 
     fetcher.submit(formData, {
@@ -96,13 +96,13 @@ function AddLinkDialog({ isOpen, onOpenChange }: DialogProps) {
         </DialogHeader>
         <div className='space-y-4 py-4'>
           <div className='space-y-2'>
-            <label htmlFor='title' className='text-sm font-medium text-gray-700 dark:text-gray-300'>
-              Title
+            <label htmlFor='name' className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+              Name
             </label>
             <Input
-              id='title'
-              value={values.title}
-              onChange={(e) => setValues((prev) => ({ ...prev, title: e.target.value }))}
+              id='name'
+              value={values.name}
+              onChange={(e) => setValues((prev) => ({ ...prev, name: e.target.value }))}
             />
           </div>
           <div className='space-y-2'>
@@ -122,7 +122,7 @@ function AddLinkDialog({ isOpen, onOpenChange }: DialogProps) {
             variant='outline'
             onClick={() => {
               onOpenChange(false);
-              setValues({ title: '', url: '' });
+              setValues({ name: '', url: '' });
             }}
           >
             Cancel

@@ -36,7 +36,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     const mappedLinks = filteredLinks.map((link) => ({
       id: link.id,
       url: link.url,
-      title: link.name,
+      name: link.name,
     }));
 
     return { links: mappedLinks, query };
@@ -168,7 +168,7 @@ export default function AdminLinks() {
                                 />
                               </th>
                               <th className='p-4 text-left text-sm font-medium text-gray-500 dark:text-gray-400 cursor-pointer'>
-                                Title
+                                Name
                               </th>
                               <th className='p-4 text-left text-sm font-medium text-gray-500 dark:text-gray-400 cursor-pointer'>
                                 URL
@@ -195,7 +195,7 @@ export default function AdminLinks() {
                                     }}
                                   />
                                 </td>
-                                <td className='p-4 text-sm text-gray-900 dark:text-gray-100'>{link.title}</td>
+                                <td className='p-4 text-sm text-gray-900 dark:text-gray-100'>{link.name}</td>
                                 <td className='p-4 text-sm text-gray-900 dark:text-gray-100'>
                                   <a
                                     href={link.url}
@@ -208,7 +208,7 @@ export default function AdminLinks() {
                                 </td>
                                 <td className='p-4'>
                                   <div className='flex items-center justify-center gap-2'>
-                                    <EditLinkButton appLink={{ id: link.id, name: link.title, url: link.url }} />
+                                    <EditLinkButton appLink={link} />
 
                                     <DeleteLinkButton id={link.id} />
                                   </div>

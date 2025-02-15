@@ -17,17 +17,17 @@ export async function action({ request }: ActionFunctionArgs) {
   const formData = await request.formData();
 
   const id = formData.get('id');
-  const title = formData.get('title');
+  const name = formData.get('name');
   const url = formData.get('url');
 
-  if (!id || !title || !url) {
-    return { success: false, message: 'ID, Title and URL are required' };
+  if (!id || !name || !url) {
+    return { success: false, message: 'ID, Name and URL are required' };
   }
 
   const response = await client.api['app-links'].update.$post({
     json: {
       id: Number(id),
-      name: title,
+      name: name,
       url: url,
     },
   });
@@ -70,14 +70,14 @@ function EditLinkDialog({ isOpen, onOpenChange, appLink: link }: EditLinkDialogP
   const [values, setValues] = useState(link);
 
   const handleSubmit = () => {
-    handleUpdateLink({ id: values.id, title: values.name, url: values.url });
+    handleUpdateLink({ id: values.id, name: values.name, url: values.url });
   };
 
-  const handleUpdateLink = (values: { id: number; title: string; url: string }) => {
-    if (!values.title || !values.url) {
+  const handleUpdateLink = (values: { id: number; name: string; url: string }) => {
+    if (!values.name || !values.url) {
       toast({
         title: 'Error',
-        description: 'Title and URL are required',
+        description: 'Name and URL are required',
         variant: 'destructive',
       });
       return;
@@ -97,11 +97,11 @@ function EditLinkDialog({ isOpen, onOpenChange, appLink: link }: EditLinkDialogP
 
         <div className='space-y-4 py-4'>
           <div className='space-y-2'>
-            <label htmlFor='edit-title' className='text-sm font-medium text-gray-700 dark:text-gray-300'>
-              Title
+            <label htmlFor='edit-name' className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+              Name
             </label>
             <Input
-              id='edit-title'
+              id='edit-name'
               value={values.name}
               onChange={(e) => setValues((prev) => ({ ...prev, name: e.target.value }))}
             />

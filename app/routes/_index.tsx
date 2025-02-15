@@ -9,7 +9,6 @@ import { ErrorState } from '~/feature/app-links/components/error-state';
 import { Header } from '~/feature/app-links/components/header';
 import { LoadingState } from '~/feature/app-links/components/loading-state';
 import { Pagination } from '~/feature/app-links/components/pagination';
-import { SimplePagination } from '~/feature/app-links/components/pagination';
 import { usePagination } from '~/hooks/use-pagination';
 
 const client = hc<AppType>(import.meta.env.VITE_API_URL);
@@ -81,7 +80,7 @@ export default function Index() {
         ) : apps.length === 0 ? (
           <EmptyState query={query} onClear={() => handleSearch('')} />
         ) : (
-          <>
+          <div className='flex flex-col gap-4'>
             <Pagination
               currentPage={currentPage}
               totalPages={totalPages}
@@ -89,10 +88,29 @@ export default function Index() {
               startIndex={startIndex}
               endIndex={endIndex}
               totalItems={apps.length}
-            />
+              className='justify-between'
+            >
+              <Pagination.ItemsInfo />
+
+              <div className='flex items-center gap-2'>
+                <Pagination.PreviousButton />
+                <Pagination.NextButton />
+              </div>
+            </Pagination>
+
             <AppGrid apps={currentApps} />
-            <SimplePagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
-          </>
+
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+              className='justify-center gap-2'
+            >
+              <Pagination.PreviousButton />
+              <Pagination.PageInfo />
+              <Pagination.NextButton />
+            </Pagination>
+          </div>
         )}
       </main>
     </div>

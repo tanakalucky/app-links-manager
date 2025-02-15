@@ -17,6 +17,8 @@ import { Spinner } from '~/components/ui/spinner';
 import { CreateLinkDialog } from '~/feature/admin/components/create-link-dialog';
 import { DeleteLinkDialog } from '~/feature/admin/components/delete-link-dialog';
 import { EditLinkDialog } from '~/feature/admin/components/edit-link-dialog';
+import { Pagination } from '~/feature/app-links/components/pagination';
+import { usePagination } from '~/hooks/use-pagination';
 import { useToast } from '~/hooks/use-toast';
 
 const client = hc<AppType>(import.meta.env.VITE_API_URL);
@@ -140,7 +142,6 @@ export default function AdminLinks() {
   const navigation = useNavigation();
   const submit = useSubmit();
   const { toast } = useToast();
-  const [currentPage, setCurrentPage] = useState(1);
   const [searchValue, setSearchValue] = useState(query);
   const [selectedLinks, setSelectedLinks] = useState<number[]>([]);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -173,12 +174,14 @@ export default function AdminLinks() {
     }
   }, [navigation.state, toast]);
 
-  const itemsPerPage = 10;
-  const totalPages = Math.ceil(links.length / itemsPerPage);
-  const currentLinks = links.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
-
-  const startIndex = links.length ? (currentPage - 1) * itemsPerPage + 1 : 0;
-  const endIndex = Math.min(currentPage * itemsPerPage, links.length);
+  const {
+    currentPage,
+    setCurrentPage,
+    currentItems: currentLinks,
+    startIndex,
+    endIndex,
+    totalPages,
+  } = usePagination(links, 10);
 
   const handleSearch = (value: string) => {
     setSearchValue(value);
@@ -401,29 +404,22 @@ export default function AdminLinks() {
                       </div>
 
                       <div className='p-4 border-t dark:border-gray-700'>
-                        <div className='flex items-center justify-between'>
-                          <p className='text-sm text-gray-600 dark:text-gray-400'>
-                            Showing {startIndex}-{endIndex} of {links.length} links
-                          </p>
-                          <div className='flex gap-2'>
-                            <Button
-                              variant='outline'
-                              size='sm'
-                              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                              disabled={currentPage === 1}
-                            >
-                              Previous
-                            </Button>
-                            <Button
-                              variant='outline'
-                              size='sm'
-                              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                              disabled={currentPage === totalPages}
-                            >
-                              Next
-                            </Button>
+                        <Pagination
+                          currentPage={currentPage}
+                          totalPages={totalPages}
+                          onPageChange={setCurrentPage}
+                          startIndex={startIndex}
+                          endIndex={endIndex}
+                          totalItems={links.length}
+                          className='justify-between'
+                        >
+                          <Pagination.ItemsInfo />
+
+                          <div className='flex items-center gap-2'>
+                            <Pagination.PreviousButton />
+                            <Pagination.NextButton />
                           </div>
-                        </div>
+                        </Pagination>
                       </div>
                     </div>
                   </>

@@ -13,10 +13,9 @@ document.addEventListener("DOMContentLoaded", () => {
     })
     .then((data) => {
       const authors = Array.from(new Set(data.map((item) => item.author)));
-      const countsPerAuthor = authors.reduce((acc, author) => {
-        acc[author] = (acc[author] || 0) + 1;
-        return acc;
-      }, {});
+      const countsPerAuthor = authors.map((author) => {
+        return data.filter((item) => item.author === author).length;
+      });
 
       const chart = new Chart(ctx, {
         type: "bar", // 棒グラフ

@@ -12,7 +12,7 @@ document.addEventListener("DOMContentLoaded", () => {
       return response.json();
     })
     .then((data) => {
-      const authors = data.map((item) => item.author);
+      const authors = Array.from(new Set(data.map((item) => item.author)));
       const countsPerAuthor = authors.reduce((acc, author) => {
         acc[author] = (acc[author] || 0) + 1;
         return acc;

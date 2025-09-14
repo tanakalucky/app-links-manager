@@ -3,18 +3,29 @@
   <head>
     <meta charset="UTF-8" />
     <title>PR 数グラフ</title>
-    <!-- Chart.js CDN（最新安定版） -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-      /* 任意でサイズ調整 */
       #chart-container {
         width: 80%;
         max-width: 800px;
         margin: auto;
       }
+      #filter-container {
+        text-align: center;
+        margin-bottom: 20px;
+      }
+      input {
+        margin: 0 5px;
+      }
     </style>
   </head>
   <body>
+    <div id="filter-container">
+      <label>開始日: <input type="date" id="startDate" /></label>
+      <label>終了日: <input type="date" id="endDate" /></label>
+      <button id="filterBtn">絞り込み</button>
+    </div>
+
     <div id="chart-container">
       <canvas id="prChart"></canvas>
     </div>
